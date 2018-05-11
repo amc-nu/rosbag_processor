@@ -1,0 +1,43 @@
+<launch>
+  <arg name="bag_path" default="" />
+  <arg name="bag_file" default="" />
+  <arg name="out_path" default="" />
+
+  <param name="/compressed_image/compressed/format" value="jpeg" />
+  <param name="/compressed_image/compressed/jpeg_quality" value="60" />
+  <param name="use_sim_time" value="true" />
+
+  <node name="republish2" type="republish" pkg="image_transport" output="screen" args="raw in:=/camera2/image_resized compressed out:=/camera_rear_right/" />
+  <node name="republish3" type="republish" pkg="image_transport" output="screen" args="raw in:=/camera3/image_resized compressed out:=/camera_front_right/" />
+  <node name="republish4" type="republish" pkg="image_transport" output="screen" args="raw in:=/camera4/image_resized compressed out:=/camera_front/" />
+  <node name="republish5" type="republish" pkg="image_transport" output="screen" args="raw in:=/camera5/image_resized compressed out:=/camera_front_left/" />
+  <node name="republish6" type="republish" pkg="image_transport" output="screen" args="raw in:=/camera6/image_resized compressed out:=/camera_rear_left/" />
+
+
+  <remap from="/lidar0/center/points_flt" to="/omron_front/points_raw" />
+  <remap from="/lidar1/center/points_flt" to="/omron_left/points_raw" />
+  <remap from="/lidar2/center/points_flt" to="/omron_right/points_raw" />
+  <remap from="/lidar3/center/points_flt" to="/omron_rear/points_raw" />
+
+  <node name="resize2" type="image_resizer.py" pkg="image_resizer" ns="camera2" />
+  <node name="resize3" type="image_resizer.py" pkg="image_resizer" ns="camera3" />
+  <node name="resize4" type="image_resizer.py" pkg="image_resizer" ns="camera4" />
+  <node name="resize5" type="image_resizer.py" pkg="image_resizer" ns="camera5" />
+  <node name="resize6" type="image_resizer.py" pkg="image_resizer" ns="camera6" />
+
+  <remap from="/points_raw" to="/velodyne64/points_raw"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="front_baselink" args="3.05 -0.185 -1.36 -1.58 0 0.0174533 /base_link /FrontLidarC_flt 10"/>
+  <node pkg="tf" type="static_transform_publisher" name="left_baselink" args="3.4 0 -0.88 -1.59 0 0.0174533 /base_link /LeftLidarC_flt 10"/>
+  <node pkg="tf" type="static_transform_publisher" name="right_baselink" args="3.4 0 -0.09 -1.59 0 0 /base_link /RightLidarC_flt 10"/>
+  <node pkg="tf" type="static_transform_publisher" name="rear_baselink" args="2.7733 0 -0.54 -1.59 0 0 /base_link /RearLidarC_flt 10"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="velo_baselink" args="1.2 0 1.4 0 0 0 /base_link /velodyne 10"/>
+  <node pkg="tf" type="static_transform_publisher" name="imu" args="1.0 0 1.2 0 0 0 /base_link /mti/data 10"/>
+
+
+  <node pkg="rosbag" type="play" name="rosbagplay" output="screen" required="true" args="--clock --delay=5 --queue=10000 $(arg bag_path)/$(arg bag_file) /tf:=/tf_dev_null"/>
+
+  <node pkg="rosbag" type="record" name="rosbagrecord" output="screen" required="true" args="/clock /tf /can_info /imu_raw /velodyne64/points_raw /omron_front/points_raw /omron_left/points_raw /omron_right/points_raw /omron_rear/points_raw /camera_rear_right/compressed /camera_front_right/compressed /camera_front/compressed /camera_front_left/compressed /camera_rear_right/compressed /camera_rear_left/compressed -O $(arg out_path)/compressed_$(arg bag_file) --split --duration 10m"/>
+
+</launch>
