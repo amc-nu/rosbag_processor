@@ -4,6 +4,7 @@ import sys
 import rospy
 import cv2
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
 
 class image_resizer:
@@ -12,11 +13,12 @@ class image_resizer:
     self.image_pub = rospy.Publisher("image_resized",Image, queue_size=10)
 
     self.bridge = CvBridge()
-    self.image_sub = rospy.Subscriber("image_raw",Image,self.callback)
+    self.image_sub = rospy.Subscriber("image_color/compressed",CompressedImage,self.callback)
 
   def callback(self,data):
     try:
-      cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+      cv_image = self.bridge.compressed_imgmsg_to_cv2(data)
+      # cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8") #uncompressed
       h = cv_image.shape[0]
       w = cv_image.shape[1]
       half_size = cv2.resize(cv_image, (w / 2, h / 2))
